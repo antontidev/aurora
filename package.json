@@ -1,0 +1,17 @@
+{
+    "name": "com.wwnb.aurora",
+    "version": "0.7.8",
+    "displayName": "Aurora FSM",
+    "description": "Ultimate power FSM",
+    "unity": "2021.1",
+    "type": "tool",
+    "keywords": [
+        "FSM",
+        "Aurora",
+        "states"
+    ],
+    "author": {
+        "name": "We will never begin",
+        "email": "wewillneverbegin@gmail.com"
+    }
+  }
