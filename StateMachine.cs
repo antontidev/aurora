@@ -74,6 +74,8 @@ namespace Source.Scripts.Core.StateMachine
                 _currentState = nextState;
                 state = _states[nextState].State;
                 await state.OnEntry();
+                
+                await CheckAutoTransition();
             }
         }
         
