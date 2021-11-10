@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -27,10 +27,8 @@ namespace Source.Scripts.Core.StateMachine.States.Base
         public abstract Task OnEntry();
 
         public abstract Task OnExit();
-
-        public virtual void Configure() {}
-
-        protected void InternalTransition(TTrigger trigger, Func<Task> action) => 
+        
+        public void InternalTransition(TTrigger trigger, Func<Task> action) => 
             _internalTriggers.Add(trigger, action);
     }
 }
