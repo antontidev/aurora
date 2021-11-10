@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Source.Scripts.Core.StateMachine.Base;
 using Source.Scripts.Core.StateMachine.Configurator;
+using Source.Scripts.Core.StateMachine.Configurator.Base;
 using Source.Scripts.Core.StateMachine.States.Base;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ namespace Source.Scripts.Core.StateMachine
     public class StateMachine<TState, TTrigger> : IStateMachine<TTrigger>
         where TTrigger : Enum where TState : Enum
     {
-        private readonly Dictionary<TState, Configurator<TState, TTrigger>> _states;
+        private readonly Dictionary<TState, IConfigurator<TState, TTrigger>> _states;
         private readonly Dictionary<TState, TState> _autoTransition;
 
         private TState _currentState;
@@ -19,7 +20,7 @@ namespace Source.Scripts.Core.StateMachine
         public StateMachine(TState start)
         {
             _currentState = start;
-            _states = new Dictionary<TState, Configurator<TState, TTrigger>>();
+            _states = new Dictionary<TState, IConfigurator<TState, TTrigger>>();
             _autoTransition = new Dictionary<TState, TState>();
         }
 
@@ -88,12 +89,11 @@ namespace Source.Scripts.Core.StateMachine
             await CheckAutoTransition();
         }
 
-        public Configurator<TState, TTrigger> RegisterState<T>(TState key, T state) 
+        public Configurator<TState, TTrigger, T> RegisterState<T>(TState key, T state) 
             where T : BaseState<TTrigger>
         {
-            var configurator = new Configurator<TState, TTrigger>(key, state);
+            var configurator = new Configurator<TState, TTrigger, T>(key, state);
             _states.Add(key, configurator);
-            state.Configure();
 
             return configurator;
         }
