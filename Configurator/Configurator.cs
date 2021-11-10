@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Source.Scripts.Core.StateMachine.Configurator.Base;
@@ -6,36 +6,46 @@ using Source.Scripts.Core.StateMachine.States.Base;
 
 namespace Source.Scripts.Core.StateMachine.Configurator
 {
-    public class Configurator<TState, TTrigger> : IConfigurator 
+    public class Configurator<TState, TTrigger, T> : IConfigurator<TState, TTrigger>
         where TState : Enum
         where TTrigger : Enum
+        where T : IState<TTrigger>
     {
         private readonly Dictionary<TTrigger, TState> _transitionMap;
-        
-        public readonly IState<TTrigger> State;
+
+        public IState<TTrigger> State => _state;
+
+        private readonly T _state;
         private readonly List<TTrigger> _reentryList;
         
         public TState StateEnum;
 
-        public Configurator(TState state, IState<TTrigger> stateObject)
+        public Configurator(TState state, T stateObject)
         {
             _transitionMap = new Dictionary<TTrigger, TState>();
             _reentryList = new List<TTrigger>();
-            State = stateObject;
+            _state = stateObject;
             StateEnum = state;
         }
         
-        public Configurator<TState, TTrigger> Permit(TTrigger trigger, TState state)
+        public Configurator<TState, TTrigger, T> Permit(TTrigger trigger, TState state)
         {
             _transitionMap.Add(trigger, state);
 
             return this;
         }
 
-        public Configurator<TState, TTrigger> PermitReentry(TTrigger trigger)
+        public Configurator<TState, TTrigger, T> PermitReentry(TTrigger trigger)
         {
             _reentryList.Add(trigger);
             
+            return this;
+        }
+
+        public Configurator<TState, TTrigger, T> SetupInternals(Action<T> action)
+        {
+            action(_state);
+
             return this;
         }
 
@@ -44,8 +54,8 @@ namespace Source.Scripts.Core.StateMachine.Configurator
 
         public async Task Reentry()
         {
-            await State.OnExit();
-            await State.OnEntry();
+            await _state.OnExit();
+            await _state.OnEntry();
         }
 
         public bool HasTransition(TTrigger trigger) =>
