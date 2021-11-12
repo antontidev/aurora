@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Source.Scripts.Core.StateMachine.Base;
@@ -9,7 +10,7 @@ using UnityEngine;
 
 namespace Source.Scripts.Core.StateMachine
 {
-    public class StateMachine<TState, TTrigger> : IStateMachine<TTrigger>
+    public partial class StateMachine<TState, TTrigger> : IStateMachine<TTrigger>
         where TTrigger : Enum where TState : Enum
     {
         private readonly Dictionary<TState, IConfigurator<TState, TTrigger>> _states;
@@ -25,6 +26,11 @@ namespace Source.Scripts.Core.StateMachine
         }
 
         public async Task Fire(TTrigger trigger)
+        {
+            Create(async () => await InternalFire(trigger));
+        }
+
+        private async Task InternalFire(TTrigger trigger)
         {
             var configurator = _states[_currentState];
             var state = configurator.State;
@@ -61,34 +67,6 @@ namespace Source.Scripts.Core.StateMachine
             }
         }
 
-        private async Task CheckAutoTransition()
-        {
-            if (_autoTransition.ContainsKey(_currentState))
-            {
-                var configurator = _states[_currentState];
-                var state = configurator.State;
-
-                var nextState = _autoTransition[_currentState];
-
-                await state.OnExit();
-
-                _currentState = nextState;
-                state = _states[nextState].State;
-                await state.OnEntry();
-                
-                await CheckAutoTransition();
-            }
-        }
-        
-        public async Task Start()
-        {
-            var  state = _states[_currentState].State;
-
-            await state.OnEntry();
-
-            await CheckAutoTransition();
-        }
-
         public Configurator<TState, TTrigger, T> RegisterState<T>(TState key, T state) 
             where T : BaseState<TTrigger>
         {
@@ -103,6 +81,43 @@ namespace Source.Scripts.Core.StateMachine
             _autoTransition.Add(oldState, newState);
 
             return this;
+        }
+
+        public async Task Start()
+        {
+            await EntryState();
+        }
+
+        private async Task EntryState()
+        {
+            var state = _states[_currentState].State;
+            await state.OnEntry();
+                
+            await CheckAutoTransition();
+        }
+
+        private async Task CheckAutoTransition()
+        {
+            if (_autoTransition.ContainsKey(_currentState))
+            {
+                var configurator = _states[_currentState];
+                var state = configurator.State;
+
+                var nextState = _autoTransition[_currentState];
+
+                await state.OnExit();
+
+                _currentState = nextState;
+                await EntryState();
+            }
+        }
+        
+        private static async Task Create(Action action)
+        {
+            await Task.Factory.StartNew(action,
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                TaskScheduler.FromCurrentSynchronizationContext());
         }
     }
 }
