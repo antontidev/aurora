@@ -27,7 +27,7 @@ namespace Source.Scripts.Core.StateMachine
 
         public async Task Fire(TTrigger trigger)
         {
-            Create(async () => await InternalFire(trigger));
+            await Create(async () => await InternalFire(trigger));
         }
 
         private async Task InternalFire(TTrigger trigger)
