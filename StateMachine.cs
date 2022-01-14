@@ -18,6 +18,8 @@ namespace Source.Scripts.Core.StateMachine
 
         private TState _currentState;
 
+        public IConfigurator<TState, TTrigger> CurrentState => _states[_currentState];
+
         public StateMachine(TState start)
         {
             _currentState = start;
@@ -27,7 +29,7 @@ namespace Source.Scripts.Core.StateMachine
 
         public async Task Fire(TTrigger trigger)
         {
-            await Create(async () => await InternalFire(trigger));
+            Create(async () => await InternalFire(trigger));
         }
 
         private async Task InternalFire(TTrigger trigger)
