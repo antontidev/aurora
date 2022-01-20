@@ -80,7 +80,7 @@ namespace Source.Scripts.Core.StateMachine
         
         public void UnregisterState(TState state) 
         {
-            _state.Remove(state);
+            _states.Remove(state);
         }
         
         public StateMachine<TState, TTrigger> AutoTransition(TState oldState, TState newState)
