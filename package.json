@@ -1,6 +1,6 @@
 {
     "name": "com.wwnb.aurora",
-    "version": "0.10",
+    "version": "0.10.0",
     "displayName": "Aurora FSM",
     "description": "Ultimate power FSM",
     "unity": "2021.1",
