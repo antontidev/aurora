@@ -77,7 +77,12 @@ namespace Source.Scripts.Core.StateMachine
 
             return configurator;
         }
-
+        
+        public void UnregisterState(TState state) 
+        {
+            _state.Remove(state);
+        }
+        
         public StateMachine<TState, TTrigger> AutoTransition(TState oldState, TState newState)
         {
             _autoTransition.Add(oldState, newState);
