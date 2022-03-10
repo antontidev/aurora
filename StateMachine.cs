@@ -29,7 +29,9 @@ namespace Source.Scripts.Core.StateMachine
 
         public async Task Fire(TTrigger trigger)
         {
-            Create(async () => await InternalFire(trigger));
+            async void Action() => await InternalFire(trigger);
+
+            await Create(Action);
         }
 
         private async Task InternalFire(TTrigger trigger)
@@ -51,15 +53,15 @@ namespace Source.Scripts.Core.StateMachine
             
             if (configurator.HasTransition(trigger))
             {
-                await state.OnExit();
-
+                await state.TriggerExit();
+                
                 _currentState = configurator.Transition(trigger);
 
                 configurator = _states[_currentState];
 
                 state = configurator.State;
-                
-                await state.OnEntry();
+
+                await state.TriggerEnter();
 
                 await CheckAutoTransition();
             }
@@ -77,12 +79,12 @@ namespace Source.Scripts.Core.StateMachine
 
             return configurator;
         }
-        
+
         public void UnregisterState(TState state) 
         {
             _states.Remove(state);
         }
-        
+
         public StateMachine<TState, TTrigger> AutoTransition(TState oldState, TState newState)
         {
             _autoTransition.Add(oldState, newState);
@@ -98,7 +100,7 @@ namespace Source.Scripts.Core.StateMachine
         private async Task EntryState()
         {
             var state = _states[_currentState].State;
-            await state.OnEntry();
+            await state.TriggerEnter();
                 
             await CheckAutoTransition();
         }
@@ -112,13 +114,13 @@ namespace Source.Scripts.Core.StateMachine
 
                 var nextState = _autoTransition[_currentState];
 
-                await state.OnExit();
+                await state.TriggerExit();
 
                 _currentState = nextState;
                 await EntryState();
             }
         }
-        
+
         private static async Task Create(Action action)
         {
             await Task.Factory.StartNew(action,

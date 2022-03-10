@@ -10,6 +10,8 @@ namespace Source.Scripts.Core.StateMachine.Configurator.Base
             get;
         }
 
+        void ForceExit();
+
         bool HasTransition(TTrigger trigger);
         TState Transition(TTrigger trigger);
 

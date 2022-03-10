@@ -8,7 +8,11 @@ namespace Source.Scripts.Core.StateMachine.States.Base
         where TTrigger : Enum
     {
         private readonly Dictionary<TTrigger, Func<Task>> _internalTriggers;
-        
+
+        public bool HasEntry { get; set; }
+
+        public bool HasExit { get; set; }
+
         protected BaseState()
         {
             _internalTriggers = new Dictionary<TTrigger, Func<Task>>();
@@ -24,10 +28,18 @@ namespace Source.Scripts.Core.StateMachine.States.Base
             await action();
         }
 
-        public abstract Task OnEntry();
+        public async Task TriggerExit()
+        {
+            if (HasExit)
+                await ((IExitState)this).OnExit();
+        }
 
-        public abstract Task OnExit();
-        
+        public async Task TriggerEnter()
+        {
+            if (HasExit)
+                await ((IEntryState)this).OnEntry();
+        }
+
         public void InternalTransition(TTrigger trigger, Func<Task> action) => 
             _internalTriggers.Add(trigger, action);
     }

@@ -9,7 +9,7 @@ namespace Source.Scripts.Core.StateMachine.Configurator
     public class Configurator<TState, TTrigger, T> : IConfigurator<TState, TTrigger>
         where TState : Enum
         where TTrigger : Enum
-        where T : IState<TTrigger>
+        where T : class, IState<TTrigger>
     {
         private readonly Dictionary<TTrigger, TState> _transitionMap;
 
@@ -26,6 +26,9 @@ namespace Source.Scripts.Core.StateMachine.Configurator
             _reentryList = new List<TTrigger>();
             _state = stateObject;
             StateEnum = state;
+
+            _state.HasEntry = stateObject is IEntryState;
+            _state.HasExit = stateObject is IExitState;
         }
         
         public Configurator<TState, TTrigger, T> Permit(TTrigger trigger, TState state)
@@ -54,8 +57,14 @@ namespace Source.Scripts.Core.StateMachine.Configurator
 
         public async Task Reentry()
         {
-            await _state.OnExit();
-            await _state.OnEntry();
+            await _state.TriggerExit();
+
+            await _state.TriggerEnter();
+        }
+
+        public void ForceExit()
+        {
+            _state.TriggerExit();
         }
 
         public bool HasTransition(TTrigger trigger) =>
