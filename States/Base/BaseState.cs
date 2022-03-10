@@ -36,7 +36,7 @@ namespace Source.Scripts.Core.StateMachine.States.Base
 
         public async Task TriggerEnter()
         {
-            if (HasExit)
+            if (HasEntry)
                 await ((IEntryState)this).OnEntry();
         }
 
