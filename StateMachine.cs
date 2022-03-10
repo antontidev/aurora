@@ -15,6 +15,7 @@ namespace Source.Scripts.Core.StateMachine
     {
         private readonly Dictionary<TState, IConfigurator<TState, TTrigger>> _states;
         private readonly Dictionary<TState, TState> _autoTransition;
+        private readonly Dictionary<TState, List<IConfigurator<TState, TTrigger>>> _subStates;
 
         private TState _currentState;
 
@@ -25,6 +26,7 @@ namespace Source.Scripts.Core.StateMachine
             _currentState = start;
             _states = new Dictionary<TState, IConfigurator<TState, TTrigger>>();
             _autoTransition = new Dictionary<TState, TState>();
+            _subStates = new Dictionary<TState, List<IConfigurator<TState, TTrigger>>>();
         }
 
         public async Task Fire(TTrigger trigger)
@@ -50,25 +52,39 @@ namespace Source.Scripts.Core.StateMachine
                 await configurator.Reentry();
                 return;
             }
-            
+
             if (configurator.HasTransition(trigger))
             {
-                await state.TriggerExit();
+                await ExitState();
                 
                 _currentState = configurator.Transition(trigger);
 
-                configurator = _states[_currentState];
-
-                state = configurator.State;
-
-                await state.TriggerEnter();
-
-                await CheckAutoTransition();
+                await EntryState();
             }
             else
             {
                 Debug.LogError($"Trigger {trigger} for state {nameof(_currentState)} and for whole FSM doesn't registered!");
             }
+        }
+
+        public Configurator<TState, TTrigger, T> RegisterSubStateFor<T>(TState stateKey, TState subStateKey, T subState)
+            where T : BaseState<TTrigger>
+        {
+            var subStateConfigurator = new Configurator<TState, TTrigger, T>(subStateKey, subState);
+            _states.Add(subStateKey, subStateConfigurator);
+
+            List<IConfigurator<TState, TTrigger>> subStatesList;
+            if (_subStates.ContainsKey(stateKey))
+            {
+                subStatesList = _subStates[stateKey];
+            }
+            else
+            {
+                subStatesList = new List<IConfigurator<TState, TTrigger>>();
+                _subStates.Add(stateKey, subStatesList);
+            }
+            subStatesList.Add(subStateConfigurator);
+            return subStateConfigurator;
         }
 
         public Configurator<TState, TTrigger, T> RegisterState<T>(TState key, T state) 
@@ -97,8 +113,41 @@ namespace Source.Scripts.Core.StateMachine
             await EntryState();
         }
 
+        public void ForceExit()
+        {
+            ExitState();
+        }
+
+        private async Task ExitState()
+        { 
+            var configurator = _states[_currentState];
+            var state = configurator.State;
+
+            await state.TriggerExit();
+
+            if (_subStates.ContainsKey(_currentState))
+            {
+                var subStatesList = _subStates[_currentState];
+
+                foreach (var subState in subStatesList)
+                {
+                    await subState.State.TriggerExit();
+                }
+            }
+        }
+        
         private async Task EntryState()
         {
+            if (_subStates.ContainsKey(_currentState))
+            {
+                var subStatesList = _subStates[_currentState];
+
+                foreach (var subState in subStatesList)
+                {
+                    await subState.State.TriggerEnter();
+                }
+            }
+            
             var state = _states[_currentState].State;
             await state.TriggerEnter();
                 
@@ -114,7 +163,7 @@ namespace Source.Scripts.Core.StateMachine
 
                 var nextState = _autoTransition[_currentState];
 
-                await state.TriggerExit();
+                await ExitState();
 
                 _currentState = nextState;
                 await EntryState();

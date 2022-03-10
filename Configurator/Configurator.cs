@@ -62,11 +62,6 @@ namespace Source.Scripts.Core.StateMachine.Configurator
             await _state.TriggerEnter();
         }
 
-        public void ForceExit()
-        {
-            _state.TriggerExit();
-        }
-
         public bool HasTransition(TTrigger trigger) =>
             _transitionMap.ContainsKey(trigger);
 
