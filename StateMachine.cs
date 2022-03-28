@@ -138,17 +138,25 @@ namespace Source.Scripts.Core.StateMachine
         
         private async Task EntryState()
         {
+            var state = _states[_currentState].State;
             if (_subStates.ContainsKey(_currentState))
             {
+                if (state is IBeforeSubStates beforeSubStates) {
+                    await beforeSubStates.OnBeforeSubStates();
+                }
+                
                 var subStatesList = _subStates[_currentState];
 
                 foreach (var subState in subStatesList)
                 {
                     await subState.State.TriggerEnter();
                 }
+
+                if (state is IAfterSubStates afterSubStates) {
+                    await afterSubStates.OnAfterSubStates();
+                }
             }
             
-            var state = _states[_currentState].State;
             await state.TriggerEnter();
                 
             await CheckAutoTransition();
