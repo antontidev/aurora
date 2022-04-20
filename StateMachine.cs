@@ -47,9 +47,10 @@ namespace Source.Scripts.Core.StateMachine
                 return;
             }
 
-            if (configurator.HasReentry(trigger))
+            if (configurator.HasReentry(trigger)) 
             {
-                await configurator.Reentry();
+                await ExitState();
+                await EntryState();
                 return;
             }
 
@@ -60,6 +61,7 @@ namespace Source.Scripts.Core.StateMachine
                 _currentState = configurator.Transition(trigger);
 
                 await EntryState();
+                await CheckAutoTransition();
             }
             else
             {
@@ -127,6 +129,7 @@ namespace Source.Scripts.Core.StateMachine
         public async Task Start()
         {
             await EntryState();
+            await CheckAutoTransition();
         }
 
         public void ForceExit()
@@ -174,23 +177,19 @@ namespace Source.Scripts.Core.StateMachine
             }
             
             await state.TriggerEnter();
-                
-            await CheckAutoTransition();
         }
 
         private async Task CheckAutoTransition()
         {
             if (_autoTransition.ContainsKey(_currentState))
             {
-                var configurator = _states[_currentState];
-                var state = configurator.State;
-
                 var nextState = _autoTransition[_currentState];
 
                 await ExitState();
 
                 _currentState = nextState;
                 await EntryState();
+                await CheckAutoTransition();
             }
         }
 

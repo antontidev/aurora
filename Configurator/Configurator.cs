@@ -55,13 +55,6 @@ namespace Source.Scripts.Core.StateMachine.Configurator
         public bool HasReentry(TTrigger trigger) =>
             _reentryList.Contains(trigger);
 
-        public async Task Reentry()
-        {
-            await _state.TriggerExit();
-
-            await _state.TriggerEnter();
-        }
-
         public bool HasTransition(TTrigger trigger) =>
             _transitionMap.ContainsKey(trigger);
 
