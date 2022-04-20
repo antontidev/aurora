@@ -86,6 +86,22 @@ namespace Source.Scripts.Core.StateMachine
             subStatesList.Add(subStateConfigurator);
             return subStateConfigurator;
         }
+        
+        public void UnRegisterSubStateFor(TState stateKey, TState subStateKey) {
+            var subStateConfigurator = _states[subStateKey];
+         
+            if (_subStates.ContainsKey(stateKey))
+            {
+                var subStatesList = _subStates[stateKey];
+                subStatesList.Remove(subStateConfigurator);
+
+                if (subStatesList.Count < 1) {
+                    _subStates.Remove(stateKey);
+                }
+            }
+
+            _states.Remove(subStateKey);
+        }
 
         public Configurator<TState, TTrigger, T> RegisterState<T>(TState key, T state) 
             where T : BaseState<TTrigger>
