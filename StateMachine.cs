@@ -132,11 +132,11 @@ namespace Source.Scripts.Core.StateMachine
             await CheckAutoTransition();
         }
 
-        public void ForceExit()
+        public async Task ForceExit()
         {
-            ExitState();
+            await ExitState();
         }
-
+        
         private async Task ExitState()
         { 
             var configurator = _states[_currentState];
