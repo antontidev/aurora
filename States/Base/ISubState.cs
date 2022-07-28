@@ -1,11 +1,9 @@
-﻿using System;
+using System;
 
 namespace Source.Scripts.Core.StateMachine.States.Base {
-    public interface ISubState<in TStateConcrete, in TState, TTrigger> 
-        where TStateConcrete : BaseState<TTrigger> 
+    public interface ISubState<TState, TTrigger>
+        where TState : Enum
         where TTrigger : Enum {
-        void RegisterSubState(TState stateEnum);
-        
-        void UnRegisterSubState(TState stateEnum);
+        TState RootState { get; }
     }
 }
