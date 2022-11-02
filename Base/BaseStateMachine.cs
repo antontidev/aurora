@@ -13,6 +13,8 @@ namespace Source.Scripts.Core.StateMachine.Base {
         public abstract IConfigurator<TState, TTrigger> CurrentState {
             get;
         }
+        
+        public TTrigger CurrentTrigger { get; private set; }
 
         protected BaseStateMachine(TState start) {
             CurrentStateEnum = start;

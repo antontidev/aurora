@@ -8,8 +8,7 @@ namespace Source.Scripts.Core.StateMachine.Configurator.Base {
         private readonly List<TTrigger> _reentryList;
         private readonly Dictionary<TTrigger, TState> _transitionMap;
         
-        public IState<TTrigger> State { get; }
-        public TState StateEnum;
+        public TState StateEnum { get; private set; }
 
         protected BaseConfigurator(TState state) {
             StateEnum = state;

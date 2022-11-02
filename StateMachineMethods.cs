@@ -22,8 +22,36 @@ namespace Source.Scripts.Core.StateMachine {
             
         }
 
-        public void RegisterState(TState key) {
+        public StateMachineMethods<TState, TTrigger> DefineState(TState key) {
+
+
+            return this;
+        }
+
+        public void RegisterStateCircle(TState state, Queue<TTrigger> triggerQueue) {
             
+        }
+
+        public StateMachineMethods<TState, TTrigger> RegisterStateOrder(TState first, TState second) {
+
+            return this;
+        }
+
+        public StateMachineMethods<TState, TTrigger> RegisterSubState(TState root, TState child) {
+
+            return this;
+        }
+
+        public StateMachineMethods<TState, TTrigger> PermitOnlyOnState(TState toTrigger, TState toPermit) {
+            return this;
+        }
+
+        public StateMachineMethods<TState, TTrigger> AllowMultiple(TState state) {
+            return this;
+        }
+
+        public StateMachineMethods<TState, TTrigger> PermitRootFromChild(TState child, TTrigger trigger) {
+            return this;
         }
 
         public void RegisterEntryMethodFor(TState state, Action method) {
