@@ -7,6 +7,6 @@ namespace Source.Scripts.Core.StateMachine.States.Base {
         void RegisterSubState<TStateConcrete>(TState state, TState subState, TStateConcrete stateConcrete)
             where TStateConcrete : BaseState<TTrigger>;
 
-        void UnRegisterSubState(TState state);
+        void UnRegisterSubState(TState state, TState subState);
     }
 }
