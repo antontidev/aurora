@@ -18,7 +18,7 @@ namespace Source.Scripts.Core.StateMachine.Configurator
         private readonly T _state;
         private readonly List<TTrigger> _reentryList;
         
-        public TState StateEnum;
+        public TState StateEnum { get; private set; }
 
         public Configurator(TState state, T stateObject)
         {
