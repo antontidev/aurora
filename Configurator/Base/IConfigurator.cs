@@ -9,6 +9,7 @@ namespace Source.Scripts.Core.StateMachine.Configurator.Base
         {
             get;
         }
+        TState StateEnum { get; }
         bool HasTransition(TTrigger trigger);
         TState Transition(TTrigger trigger);
         bool HasReentry(TTrigger trigger);

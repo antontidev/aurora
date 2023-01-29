@@ -47,6 +47,22 @@ namespace Source.Scripts.Core.StateMachine
                 return;
             }
 
+            if (_subStates.ContainsKey(configurator.StateEnum)) {
+                var subStates = _subStates[configurator.StateEnum];
+
+                bool containsInChild = false;
+                foreach (var stateConfigurator in subStates) {
+                    var subState = stateConfigurator.State;
+
+                    if (subState.HasInternal(trigger)) {
+                        containsInChild = true;
+                        await subState.Internal(trigger);
+                    }
+                }
+
+                if (containsInChild) return;
+            }
+            
             if (configurator.HasReentry(trigger)) 
             {
                 await ExitState();
