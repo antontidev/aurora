@@ -31,7 +31,7 @@ namespace Source.Scripts.Core.StateMachine
 
         public async Task Fire(TTrigger trigger)
         {
-            async void Action() => await InternalFire(trigger);
+            async Task Action() => await InternalFire(trigger);
 
             await Create(Action);
         }
@@ -209,12 +209,14 @@ namespace Source.Scripts.Core.StateMachine
             }
         }
 
-        private static async Task Create(Action action)
+        private static async Task Create(Func<Task> action)
         {
-            await Task.Factory.StartNew(action,
+            var task = Task.Factory.StartNew(action,
                 CancellationToken.None,
                 TaskCreationOptions.None,
                 TaskScheduler.FromCurrentSynchronizationContext());
+
+            await task.Unwrap();
         }
     }
 }
