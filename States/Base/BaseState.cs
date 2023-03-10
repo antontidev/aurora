@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 
 namespace Source.Scripts.Core.StateMachine.States.Base
 {
-    public abstract class BaseState<TTrigger> : IState<TTrigger>
-        where TTrigger : Enum
+    public abstract class BaseState<TState, TTrigger> : IState<TTrigger>
+        where TTrigger : Enum where TState : Enum
     {
         private readonly Dictionary<TTrigger, Func<Task>> _internalTriggers;
 
@@ -27,6 +27,8 @@ namespace Source.Scripts.Core.StateMachine.States.Base
 
             await action();
         }
+
+        public abstract void RegisterState(StateMachine<TState, TTrigger> stateMachine);
 
         public async Task TriggerExit()
         {

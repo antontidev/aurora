@@ -86,7 +86,7 @@ namespace Source.Scripts.Core.StateMachine
         }
 
         public Configurator<TState, TTrigger, T> RegisterSubStateFor<T>(TState stateKey, TState subStateKey, T subState)
-            where T : BaseState<TTrigger>
+            where T : BaseState<TState, TTrigger>
         {
             var subStateConfigurator = new Configurator<TState, TTrigger, T>(subStateKey, subState);
             _states.Add(subStateKey, subStateConfigurator);
@@ -122,7 +122,7 @@ namespace Source.Scripts.Core.StateMachine
         }
 
         public Configurator<TState, TTrigger, T> RegisterState<T>(TState key, T state) 
-            where T : BaseState<TTrigger>
+            where T : BaseState<TState, TTrigger>
         {
             var configurator = new Configurator<TState, TTrigger, T>(key, state);
             _states.Add(key, configurator);
