@@ -102,6 +102,15 @@ namespace Source.Scripts.Core.StateMachine
                 _subStates.Add(stateKey, subStatesList);
             }
             subStatesList.Add(subStateConfigurator);
+            
+            if (_states.ContainsKey(stateKey)) {
+                var stateConfigurator = _states[stateKey];
+
+                if (stateConfigurator.Entered) {
+                    Create(subState.TriggerEnter);
+                }
+            }
+            
             return subStateConfigurator;
         }
         
@@ -158,22 +167,24 @@ namespace Source.Scripts.Core.StateMachine
             var configurator = _states[_currentState];
             var state = configurator.State;
 
+            configurator.Entered = false;
             await state.TriggerExit();
 
             if (_subStates.ContainsKey(_currentState))
             {
                 var subStatesList = _subStates[_currentState];
 
-                foreach (var subState in subStatesList)
-                {
-                    await subState.State.TriggerExit();
+                foreach (var subStateConfigurator in subStatesList) {
+                    subStateConfigurator.Entered = false;
+                    await subStateConfigurator.State.TriggerExit();
                 }
             }
         }
         
         private async Task EntryState()
         {
-            var state = _states[_currentState].State;
+            var stateConfigurator = _states[_currentState];
+            var state = stateConfigurator.State;
             if (_subStates.ContainsKey(_currentState))
             {
                 if (state is IBeforeSubStates beforeSubStates) {
@@ -182,9 +193,9 @@ namespace Source.Scripts.Core.StateMachine
                 
                 var subStatesList = _subStates[_currentState];
 
-                foreach (var subState in subStatesList)
-                {
-                    await subState.State.TriggerEnter();
+                foreach (var subStateConfigurator in subStatesList) {
+                    subStateConfigurator.Entered = true;
+                    await subStateConfigurator.State.TriggerEnter();
                 }
 
                 if (state is IAfterSubStates afterSubStates) {
@@ -192,6 +203,7 @@ namespace Source.Scripts.Core.StateMachine
                 }
             }
             
+            stateConfigurator.Entered = true;
             await state.TriggerEnter();
         }
 

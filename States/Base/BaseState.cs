@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Source.Scripts.Core.StateMachine.States.Base
 {
@@ -12,6 +13,8 @@ namespace Source.Scripts.Core.StateMachine.States.Base
         public bool HasEntry { get; set; }
 
         public bool HasExit { get; set; }
+        
+        public bool Entered { get; set; }
 
         protected BaseState()
         {
@@ -30,16 +33,16 @@ namespace Source.Scripts.Core.StateMachine.States.Base
 
         public abstract void RegisterState(StateMachine<TState, TTrigger> stateMachine);
 
-        public async Task TriggerExit()
-        {
-            if (HasExit)
-                await ((IExitState)this).OnExit();
+        public async Task TriggerExit() {
+            if (!HasExit) return;
+            
+            await ((IExitState)this).OnExit();
         }
 
-        public async Task TriggerEnter()
-        {
-            if (HasEntry)
-                await ((IEntryState)this).OnEntry();
+        public async Task TriggerEnter() {
+            if (!HasEntry) return;
+
+            await ((IEntryState)this).OnEntry();
         }
 
         public void InternalTransition(TTrigger trigger, Func<Task> action) => 

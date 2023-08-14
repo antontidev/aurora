@@ -11,9 +11,11 @@ namespace Source.Scripts.Core.StateMachine.Configurator
         where TTrigger : Enum
         where T : class, IState<TTrigger>
     {
-        private readonly Dictionary<TTrigger, TState> _transitionMap;
+        public IState<TTrigger> State => _state; 
 
-        public IState<TTrigger> State => _state;
+        public bool Entered { get; set; }
+        
+        private readonly Dictionary<TTrigger, TState> _transitionMap;
 
         private readonly T _state;
         private readonly List<TTrigger> _reentryList;
