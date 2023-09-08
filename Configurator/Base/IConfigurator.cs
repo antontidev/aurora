@@ -10,6 +10,7 @@ namespace Source.Scripts.Core.StateMachine.Configurator.Base
             get;
         }
         bool Entered { get; set; }
+        bool Exited { get; set; }
         TState StateEnum { get; }
         bool HasTransition(TTrigger trigger);
         TState Transition(TTrigger trigger);

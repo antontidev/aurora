@@ -117,8 +117,12 @@ namespace Source.Scripts.Core.StateMachine
         public void UnRegisterSubStateFor(TState stateKey, TState subStateKey) {
             var subStateConfigurator = _states[subStateKey];
          
-            if (_subStates.ContainsKey(stateKey))
-            {
+            if (_subStates.ContainsKey(stateKey)) {
+                var rootState = _states[stateKey];
+                if (!rootState.Exited) {
+                    Create(subStateConfigurator.State.TriggerExit);
+                }
+                
                 var subStatesList = _subStates[stateKey];
                 subStatesList.Remove(subStateConfigurator);
 
@@ -168,6 +172,7 @@ namespace Source.Scripts.Core.StateMachine
             var state = configurator.State;
 
             configurator.Entered = false;
+            configurator.Exited = true;
             await state.TriggerExit();
 
             if (_subStates.ContainsKey(_currentState))
@@ -176,6 +181,7 @@ namespace Source.Scripts.Core.StateMachine
 
                 foreach (var subStateConfigurator in subStatesList) {
                     subStateConfigurator.Entered = false;
+                    subStateConfigurator.Exited = true;
                     await subStateConfigurator.State.TriggerExit();
                 }
             }

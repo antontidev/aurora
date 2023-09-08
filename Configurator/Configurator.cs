@@ -14,6 +14,7 @@ namespace Source.Scripts.Core.StateMachine.Configurator
         public IState<TTrigger> State => _state; 
 
         public bool Entered { get; set; }
+        public bool Exited { get; set; }
         
         private readonly Dictionary<TTrigger, TState> _transitionMap;
 
