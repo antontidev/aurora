@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Source.Scripts.Core.StateMachine.States.Base
 {
     public abstract class BaseState<TState, TTrigger> : IState<TTrigger>
-        where TTrigger : Enum where TState : Enum
+        where TTrigger : Enum
     {
         private readonly Dictionary<TTrigger, Func<Task>> _internalTriggers;
 

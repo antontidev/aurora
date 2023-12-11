@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Source.Scripts.Core.StateMachine
 {
     public partial class StateMachine<TState, TTrigger> : IStateMachine<TTrigger>
-        where TTrigger : Enum where TState : Enum
+        where TTrigger : Enum
     {
         private readonly Dictionary<TState, IConfigurator<TState, TTrigger>> _states;
         private readonly Dictionary<TState, TState> _autoTransition;

@@ -7,7 +7,6 @@ using Source.Scripts.Core.StateMachine.States.Base;
 namespace Source.Scripts.Core.StateMachine.Configurator
 {
     public class Configurator<TState, TTrigger, T> : IConfigurator<TState, TTrigger>
-        where TState : Enum
         where TTrigger : Enum
         where T : class, IState<TTrigger>
     {
