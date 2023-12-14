@@ -149,8 +149,10 @@ namespace Source.Scripts.Core.StateMachine
         }
 
         public Configurator<TState, TTrigger, T> RegisterState<T>(TState key, T state) 
-            where T : BaseState<TState, TTrigger>
-        {
+            where T : BaseState<TState, TTrigger> {
+            if (_states.ContainsKey(key)) {
+                _states.Remove(key);
+            }
             var configurator = new Configurator<TState, TTrigger, T>(key, state);
             _states.Add(key, configurator);
 
