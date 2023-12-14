@@ -29,6 +29,10 @@ namespace Source.Scripts.Core.StateMachine
             _subStates = new Dictionary<TState, List<IConfigurator<TState, TTrigger>>>();
         }
 
+        public Configurator<TState, TTrigger, T> GetConfigurator<T>(TState key) where T : class, IState<TTrigger> {
+            return (Configurator<TState, TTrigger, T>)_states[key];
+        }
+
         public async Task Fire(TTrigger trigger)
         {
             async Task Action() => await InternalFire(trigger);
@@ -40,6 +44,16 @@ namespace Source.Scripts.Core.StateMachine
         {
             var configurator = _states[_currentState];
             var state = configurator.State;
+
+            if (_subStates.ContainsKey(configurator.StateEnum)) {
+                var subStatesList = _subStates[configurator.StateEnum];
+
+                foreach (var subState in subStatesList) {
+                    if (subState.State.HasInternal(trigger)) {
+                        await subState.State.Internal(trigger);
+                    }
+                }
+            }
 
             if (state.HasInternal(trigger))
             {
@@ -206,6 +220,12 @@ namespace Source.Scripts.Core.StateMachine
 
                 if (state is IAfterSubStates afterSubStates) {
                     await afterSubStates.OnAfterSubStates();
+                }
+
+                foreach (var subStateConfigurator in subStatesList) {
+                    if (subStateConfigurator.State is IAfterSubStates subStateAfter) {
+                        await subStateAfter.OnAfterSubStates();
+                    }
                 }
             }
             
