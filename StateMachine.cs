@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Source.Scripts.Core.StateMachine.Base;
 using Source.Scripts.Core.StateMachine.Configurator;
@@ -95,7 +96,7 @@ namespace Source.Scripts.Core.StateMachine
             }
             else
             {
-                Debug.LogError($"Trigger {trigger} for state {nameof(_currentState)} and for whole FSM doesn't registered!");
+                Debug.LogWarning($"Trigger {trigger} for state {nameof(_currentState)} and for whole FSM doesn't registered!");
             }
         }
 
@@ -103,7 +104,7 @@ namespace Source.Scripts.Core.StateMachine
             where T : BaseState<TState, TTrigger>
         {
             var subStateConfigurator = new Configurator<TState, TTrigger, T>(subStateKey, subState);
-            _states.Add(subStateKey, subStateConfigurator);
+            _states[subStateKey] = subStateConfigurator;
 
             List<IConfigurator<TState, TTrigger>> subStatesList;
             if (_subStates.ContainsKey(stateKey))
@@ -213,7 +214,7 @@ namespace Source.Scripts.Core.StateMachine
                     await beforeSubStates.OnBeforeSubStates();
                 }
                 
-                var subStatesList = _subStates[_currentState];
+                var subStatesList = _subStates[_currentState].ToList();
 
                 foreach (var subStateConfigurator in subStatesList) {
                     subStateConfigurator.Entered = true;
