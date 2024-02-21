@@ -208,6 +208,7 @@ namespace Source.Scripts.Core.StateMachine
         {
             var stateConfigurator = _states[_currentState];
             var state = stateConfigurator.State;
+            stateConfigurator.Entered = true;
             if (_subStates.ContainsKey(_currentState))
             {
                 if (state is IBeforeSubStates beforeSubStates) {
@@ -232,7 +233,6 @@ namespace Source.Scripts.Core.StateMachine
                 }
             }
             
-            stateConfigurator.Entered = true;
             await state.TriggerEnter();
         }
 
