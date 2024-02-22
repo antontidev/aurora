@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Source.Scripts.Core.StateMachine.Configurator.Base;
 using Source.Scripts.Core.StateMachine.States.Base;
 

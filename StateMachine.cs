@@ -3,46 +3,45 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Source.Scripts.Core.StateMachine.Base;
 using Source.Scripts.Core.StateMachine.Configurator;
 using Source.Scripts.Core.StateMachine.Configurator.Base;
 using Source.Scripts.Core.StateMachine.States.Base;
 using UnityEngine;
 
-namespace Source.Scripts.Core.StateMachine
-{
-    public partial class StateMachine<TState, TTrigger> : IStateMachine<TTrigger>
-        where TTrigger : Enum
-    {
+namespace Source.Scripts.Core.StateMachine {
+    public class StateMachine<TState, TTrigger> : IStateMachine<TTrigger>
+        where TTrigger : Enum {
         private readonly Dictionary<TState, IConfigurator<TState, TTrigger>> _states;
         private readonly Dictionary<TState, TState> _autoTransition;
         private readonly Dictionary<TState, List<IConfigurator<TState, TTrigger>>> _subStates;
 
         private TState _currentState;
 
+        private List<UniTask> _tasks;
+
         public IConfigurator<TState, TTrigger> CurrentState => _states[_currentState];
 
-        public StateMachine(TState start)
-        {
+        public StateMachine(TState start) {
             _currentState = start;
             _states = new Dictionary<TState, IConfigurator<TState, TTrigger>>();
             _autoTransition = new Dictionary<TState, TState>();
             _subStates = new Dictionary<TState, List<IConfigurator<TState, TTrigger>>>();
+            _tasks = new List<UniTask>();
         }
 
         public Configurator<TState, TTrigger, T> GetConfigurator<T>(TState key) where T : class, IState<TTrigger> {
             return (Configurator<TState, TTrigger, T>)_states[key];
         }
 
-        public async Task Fire(TTrigger trigger)
-        {
-            async Task Action() => await InternalFire(trigger);
+        public async UniTask Fire(TTrigger trigger) {
+            async UniTask Action() => await InternalFire(trigger);
 
             await Create(Action);
         }
 
-        private async Task InternalFire(TTrigger trigger)
-        {
+        private async UniTask InternalFire(TTrigger trigger) {
             var configurator = _states[_currentState];
             var state = configurator.State;
 
@@ -51,13 +50,18 @@ namespace Source.Scripts.Core.StateMachine
 
                 foreach (var subState in subStatesList) {
                     if (subState.State.HasInternal(trigger)) {
-                        await subState.State.Internal(trigger);
+                        var internalTask = subState.State.Internal(trigger);
+                        _tasks.Add(internalTask);
                     }
+                }
+
+                if (_tasks.Count != 0) {
+                    await UniTask.WhenAll(_tasks);
+                    _tasks.Clear();
                 }
             }
 
-            if (state.HasInternal(trigger))
-            {
+            if (state.HasInternal(trigger)) {
                 await state.Internal(trigger);
                 return;
             }
@@ -71,22 +75,25 @@ namespace Source.Scripts.Core.StateMachine
 
                     if (subState.HasInternal(trigger)) {
                         containsInChild = true;
-                        await subState.Internal(trigger);
+                        var internalTask = subState.Internal(trigger);
+                        _tasks.Add(internalTask);
                     }
                 }
 
-                if (containsInChild) return;
+                if (containsInChild) {
+                    await UniTask.WhenAll(_tasks);
+                    _tasks.Clear();
+                    return;
+                }
             }
             
-            if (configurator.HasReentry(trigger)) 
-            {
+            if (configurator.HasReentry(trigger)) {
                 await ExitState();
                 await EntryState();
                 return;
             }
 
-            if (configurator.HasTransition(trigger))
-            {
+            if (configurator.HasTransition(trigger)) {
                 await ExitState();
                 
                 _currentState = configurator.Transition(trigger);
@@ -94,25 +101,21 @@ namespace Source.Scripts.Core.StateMachine
                 await EntryState();
                 await CheckAutoTransition();
             }
-            else
-            {
+            else {
                 Debug.LogWarning($"Trigger {trigger} for state {nameof(_currentState)} and for whole FSM doesn't registered!");
             }
         }
 
         public Configurator<TState, TTrigger, T> RegisterSubStateFor<T>(TState stateKey, TState subStateKey, T subState)
-            where T : BaseState<TState, TTrigger>
-        {
+            where T : BaseState<TState, TTrigger> {
             var subStateConfigurator = new Configurator<TState, TTrigger, T>(subStateKey, subState);
             _states[subStateKey] = subStateConfigurator;
 
             List<IConfigurator<TState, TTrigger>> subStatesList;
-            if (_subStates.ContainsKey(stateKey))
-            {
+            if (_subStates.ContainsKey(stateKey)) {
                 subStatesList = _subStates[stateKey];
             }
-            else
-            {
+            else {
                 subStatesList = new List<IConfigurator<TState, TTrigger>>();
                 _subStates.Add(stateKey, subStatesList);
             }
@@ -160,31 +163,26 @@ namespace Source.Scripts.Core.StateMachine
             return configurator;
         }
 
-        public void UnregisterState(TState state) 
-        {
+        public void UnregisterState(TState state) {
             _states.Remove(state);
         }
 
-        public StateMachine<TState, TTrigger> AutoTransition(TState oldState, TState newState)
-        {
+        public StateMachine<TState, TTrigger> AutoTransition(TState oldState, TState newState) {
             _autoTransition.Add(oldState, newState);
 
             return this;
         }
 
-        public async Task Start()
-        {
+        public async UniTask Start() {
             await EntryState();
             await CheckAutoTransition();
         }
 
-        public async Task ForceExit()
-        {
+        public async UniTask ForceExit() {
             await ExitState();
         }
         
-        private async Task ExitState()
-        { 
+        private async UniTask ExitState() { 
             var configurator = _states[_currentState];
             var state = configurator.State;
 
@@ -192,25 +190,28 @@ namespace Source.Scripts.Core.StateMachine
             configurator.Exited = true;
             await state.TriggerExit();
 
-            if (_subStates.ContainsKey(_currentState))
-            {
+            if (_subStates.ContainsKey(_currentState)) {
                 var subStatesList = _subStates[_currentState];
 
                 foreach (var subStateConfigurator in subStatesList) {
                     subStateConfigurator.Entered = false;
                     subStateConfigurator.Exited = true;
-                    await subStateConfigurator.State.TriggerExit();
+                    var exitTask = subStateConfigurator.State.TriggerExit();
+                    _tasks.Add(exitTask);
+                }
+
+                if (_tasks.Count != 0) {
+                    await UniTask.WhenAll(_tasks);
+                    _tasks.Clear();
                 }
             }
         }
         
-        private async Task EntryState()
-        {
+        private async UniTask EntryState() {
             var stateConfigurator = _states[_currentState];
             var state = stateConfigurator.State;
             stateConfigurator.Entered = true;
-            if (_subStates.ContainsKey(_currentState))
-            {
+            if (_subStates.ContainsKey(_currentState)) {
                 if (state is IBeforeSubStates beforeSubStates) {
                     await beforeSubStates.OnBeforeSubStates();
                 }
@@ -219,7 +220,12 @@ namespace Source.Scripts.Core.StateMachine
 
                 foreach (var subStateConfigurator in subStatesList) {
                     subStateConfigurator.Entered = true;
-                    await subStateConfigurator.State.TriggerEnter();
+                    var enterTask = subStateConfigurator.State.TriggerEnter();
+                    _tasks.Add(enterTask);
+                }
+                if (_tasks.Count != 0) {
+                    await UniTask.WhenAll(_tasks);
+                    _tasks.Clear();
                 }
 
                 if (state is IAfterSubStates afterSubStates) {
@@ -228,18 +234,22 @@ namespace Source.Scripts.Core.StateMachine
 
                 foreach (var subStateConfigurator in subStatesList) {
                     if (subStateConfigurator.State is IAfterSubStates subStateAfter) {
-                        await subStateAfter.OnAfterSubStates();
+                        var afterSubStatesTask = subStateAfter.OnAfterSubStates();
+                        _tasks.Add(afterSubStatesTask);
                     }
+                }
+                
+                if (_tasks.Count != 0) {
+                    await UniTask.WhenAll(_tasks);
+                    _tasks.Clear();
                 }
             }
             
             await state.TriggerEnter();
         }
 
-        private async Task CheckAutoTransition()
-        {
-            if (_autoTransition.ContainsKey(_currentState))
-            {
+        private async UniTask CheckAutoTransition() {
+            if (_autoTransition.ContainsKey(_currentState)) {
                 var nextState = _autoTransition[_currentState];
 
                 await ExitState();
@@ -250,8 +260,7 @@ namespace Source.Scripts.Core.StateMachine
             }
         }
 
-        private static async Task Create(Func<Task> action)
-        {
+        private static async UniTask Create(Func<UniTask> action) {
             var task = Task.Factory.StartNew(action,
                 CancellationToken.None,
                 TaskCreationOptions.None,

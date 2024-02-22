@@ -1,5 +1,4 @@
 using Source.Scripts.Core.StateMachine.States.Base;
-using System.Threading.Tasks;
 
 namespace Source.Scripts.Core.StateMachine.Configurator.Base
 {

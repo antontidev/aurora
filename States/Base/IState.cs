@@ -1,19 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 
-namespace Source.Scripts.Core.StateMachine.States.Base
-{
-    public interface IState<in TTrigger> : IStateless
-    {
+namespace Source.Scripts.Core.StateMachine.States.Base {
+    public interface IState<in TTrigger> : IStateless {
         bool HasInternal(TTrigger trigger);
-        
         public bool HasEntry { get; set; }
-        
         public bool HasExit { get; set; }
-        
-        Task Internal(TTrigger trigger);
-
-        Task TriggerExit();
-
-        Task TriggerEnter();
+        UniTask Internal(TTrigger trigger);
+        UniTask TriggerExit();
+        UniTask TriggerEnter();
     }
 }
