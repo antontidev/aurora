@@ -3,7 +3,6 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using Source.Scripts.Core.StateMachine.Base;
 using Source.Scripts.Core.StateMachine.Configurator;
 using Source.Scripts.Core.StateMachine.Configurator.Base;
@@ -19,7 +18,7 @@ namespace Source.Scripts.Core.StateMachine {
 
         private TState _currentState;
 
-        private List<UniTask> _tasks;
+        private List<Task> _tasks;
 
         public IConfigurator<TState, TTrigger> CurrentState => _states[_currentState];
 
@@ -28,20 +27,20 @@ namespace Source.Scripts.Core.StateMachine {
             _states = new Dictionary<TState, IConfigurator<TState, TTrigger>>();
             _autoTransition = new Dictionary<TState, TState>();
             _subStates = new Dictionary<TState, List<IConfigurator<TState, TTrigger>>>();
-            _tasks = new List<UniTask>();
+            _tasks = new List<Task>();
         }
 
         public Configurator<TState, TTrigger, T> GetConfigurator<T>(TState key) where T : class, IState<TTrigger> {
             return (Configurator<TState, TTrigger, T>)_states[key];
         }
 
-        public async UniTask Fire(TTrigger trigger) {
-            async UniTask Action() => await InternalFire(trigger);
+        public async Task Fire(TTrigger trigger) {
+            async Task Action() => await InternalFire(trigger);
 
             await Create(Action);
         }
 
-        private async UniTask InternalFire(TTrigger trigger) {
+        private async Task InternalFire(TTrigger trigger) {
             var configurator = _states[_currentState];
             var state = configurator.State;
 
@@ -56,7 +55,7 @@ namespace Source.Scripts.Core.StateMachine {
                 }
 
                 if (_tasks.Count != 0) {
-                    await UniTask.WhenAll(_tasks);
+                    await Task.WhenAll(_tasks);
                     _tasks.Clear();
                 }
             }
@@ -81,7 +80,7 @@ namespace Source.Scripts.Core.StateMachine {
                 }
 
                 if (containsInChild) {
-                    await UniTask.WhenAll(_tasks);
+                    await Task.WhenAll(_tasks);
                     _tasks.Clear();
                     return;
                 }
@@ -173,16 +172,16 @@ namespace Source.Scripts.Core.StateMachine {
             return this;
         }
 
-        public async UniTask Start() {
+        public async Task Start() {
             await EntryState();
             await CheckAutoTransition();
         }
 
-        public async UniTask ForceExit() {
+        public async Task ForceExit() {
             await ExitState();
         }
         
-        private async UniTask ExitState() { 
+        private async Task ExitState() { 
             var configurator = _states[_currentState];
             var state = configurator.State;
 
@@ -201,13 +200,13 @@ namespace Source.Scripts.Core.StateMachine {
                 }
 
                 if (_tasks.Count != 0) {
-                    await UniTask.WhenAll(_tasks);
+                    await Task.WhenAll(_tasks);
                     _tasks.Clear();
                 }
             }
         }
         
-        private async UniTask EntryState() {
+        private async Task EntryState() {
             var stateConfigurator = _states[_currentState];
             var state = stateConfigurator.State;
             stateConfigurator.Entered = true;
@@ -224,7 +223,7 @@ namespace Source.Scripts.Core.StateMachine {
                     _tasks.Add(enterTask);
                 }
                 if (_tasks.Count != 0) {
-                    await UniTask.WhenAll(_tasks);
+                    await Task.WhenAll(_tasks);
                     _tasks.Clear();
                 }
 
@@ -240,7 +239,7 @@ namespace Source.Scripts.Core.StateMachine {
                 }
                 
                 if (_tasks.Count != 0) {
-                    await UniTask.WhenAll(_tasks);
+                    await Task.WhenAll(_tasks);
                     _tasks.Clear();
                 }
             }
@@ -248,7 +247,7 @@ namespace Source.Scripts.Core.StateMachine {
             await state.TriggerEnter();
         }
 
-        private async UniTask CheckAutoTransition() {
+        private async Task CheckAutoTransition() {
             if (_autoTransition.ContainsKey(_currentState)) {
                 var nextState = _autoTransition[_currentState];
 
@@ -260,7 +259,7 @@ namespace Source.Scripts.Core.StateMachine {
             }
         }
 
-        private static async UniTask Create(Func<UniTask> action) {
+        private static async Task Create(Func<Task> action) {
             var task = Task.Factory.StartNew(action,
                 CancellationToken.None,
                 TaskCreationOptions.None,

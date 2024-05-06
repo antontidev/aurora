@@ -1,9 +1,9 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Source.Scripts.Core.StateMachine.Base
 {
     public interface IStateMachine<in TTrigger> : IStatelessMachine where TTrigger : System.Enum
     {
-        UniTask Fire(TTrigger trigger);
+        Task Fire(TTrigger trigger);
     }
 }

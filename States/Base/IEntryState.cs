@@ -1,7 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Source.Scripts.Core.StateMachine.States.Base {
     public interface IEntryState {
-        UniTask OnEntry();
+        Task OnEntry();
     }
 }

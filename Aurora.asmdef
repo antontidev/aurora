@@ -1,9 +1,7 @@
 {
     "name": "Aurora",
     "rootNamespace": "",
-    "references": [
-        "UniTask"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
