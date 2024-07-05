@@ -121,11 +121,8 @@ namespace Source.Scripts.Core.StateMachine {
             subStatesList.Add(subStateConfigurator);
             
             if (_states.ContainsKey(stateKey)) {
-                var stateConfigurator = _states[stateKey];
-
-                if (stateConfigurator.Entered) {
-                    Create(subState.TriggerEnter);
-                }
+                subStateConfigurator.Entered = true;
+                Create(subState.TriggerEnter);
             }
             
             return subStateConfigurator;
@@ -218,9 +215,11 @@ namespace Source.Scripts.Core.StateMachine {
                 var subStatesList = _subStates[_currentState].ToList();
 
                 foreach (var subStateConfigurator in subStatesList) {
-                    subStateConfigurator.Entered = true;
-                    var enterTask = subStateConfigurator.State.TriggerEnter();
-                    _tasks.Add(enterTask);
+                    if (!subStateConfigurator.Entered) {
+                        subStateConfigurator.Entered = true;
+                        var enterTask = subStateConfigurator.State.TriggerEnter();
+                        _tasks.Add(enterTask);
+                    }
                 }
                 if (_tasks.Count != 0) {
                     await Task.WhenAll(_tasks);
